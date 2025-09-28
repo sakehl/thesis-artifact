@@ -1,0 +1,7 @@
+[submodule "vercors"]
+	path = vercors
+	url = https://github.com/sakehl/vercors.git
+	branch = thesis-artifact-lars
+[submodule "Halide"]
+	path = Halide
+	url = https://github.com/sakehl/Halide.git
