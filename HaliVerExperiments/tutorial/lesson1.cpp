@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
       f(x, y) % 2 == 0));
 
   // If we want to check if the front-end adheres to this we can write
-  f.translate_to_pvl("lesson1_f_front.pvl", {inp}, {property});
+  f.translate_to_pvl("tutorial/lesson1_f_front.pvl", {inp}, {property});
   // The file `lesson1_f_front.pvl` is made and can be checked by VerCors:
-  // $ vct build/lesson1_f_front.pvl
+  // $ vct build/tutorial/lesson1_f_front.pvl
   // It gives warnings about triggers, but you can ignore that since these
   // specific triggers are actually inferred in the underlying tools.
   // Alternatively, the property could be written with trigger as:
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   // Normally Halide allows buffers to have any dimensions checks them at
   // runtime to be actually correct:
   try {
-    f.compile_to_c("lesson1_f_0.c", {inp}, {}, "f");
+    f.compile_to_c("tutorial/lesson1_f_0.c", {inp}, {}, "f");
   } catch (Halide::Error errorCode) {
     // But we throw an error, you need to specify the dimensions of the buffers.
     // In general, the underlying VerCors tools has a lot of trouble verifying
@@ -83,14 +83,14 @@ int main(int argc, char *argv[]) {
   inp.dim(1).set_bounds(0, nx);
   inp.dim(1).set_stride(ny);
 
-  f.compile_to_c("lesson1_f_1.c", {inp}, {}, "f");
+  f.compile_to_c("tutorial/lesson1_f_1.c", {inp}, {}, "f");
   // You can run this with
-  // $ vct build/lesson1_f_1.c
+  // $ vct build/tutorial/lesson1_f_1.c
   // And it will check that there are no memory errors
 
   // To also verify the property we add it as _pipeline annotation_.
-  f.compile_to_c("lesson1_f_2.c", {inp}, {property2}, "f");
-  // $ vct build/lesson1_f_2.c
+  f.compile_to_c("tutorial/lesson1_f_2.c", {inp}, {property2}, "f");
+  // $ vct build/tutorial/lesson1_f_2.c
   // But this fails. For back-end verification. More intermediate information is
   // needed for the back-end to verify.
 
@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
   // Note with this we annotate that after the update this property holds for
   // all values, not only for the update where y==0.
 
-  f.compile_to_c("lesson1_f_3.c", {inp}, {property2}, "f");
-  // $ vct build/lesson1_f_3.c
+  f.compile_to_c("tutorial/lesson1_f_3.c", {inp}, {property2}, "f");
+  // $ vct build/tutorial/lesson1_f_3.c
   // And this does verify
 
   // You can also write f.ensures(..), but then the annotations you are adding
@@ -117,10 +117,10 @@ int main(int argc, char *argv[]) {
   set_bounds(
       {{0, nx}, {0, ny}},
       f2.output_buffer()); // This is a helper function to easier set the bounds
-  f2.compile_to_c("lesson1_f_4.c", {inp}, {}, "f2");
+  f2.compile_to_c("tutorial/lesson1_f_4.c", {inp}, {}, "f2");
   
-  // $ vct build/lesson1_f_4.c
-  // If you inspect `build/lesson1_f_4.c` you will see that even when did not
+  // $ vct build/tutorial/lesson1_f_4.c
+  // If you inspect `build/tutorial/lesson1_f_4.c` you will see that even when did not
   // add the `property` pipeline annotation here, the property is still added on
   // line 182. This is because the _intermediate_ annotations of the last
   // function in the pipeline (here `f2`) is automatically added as _pipeline_
@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
       .split(x, xo, xi, 2, Halide::TailStrategy::GuardWithIf)
       .unroll(xi);
   f2.update().parallel(x);
-  f2.compile_to_c("lesson1_f_5.c", {inp}, {}, "f2");
-  // $ vct build/lesson1_f_5.c
+  f2.compile_to_c("tutorial/lesson1_f_5.c", {inp}, {}, "f2");
+  // $ vct build/tutorial/lesson1_f_5.c
 }
 
 void set_bounds(std::vector<std::tuple<int, int>> dims,

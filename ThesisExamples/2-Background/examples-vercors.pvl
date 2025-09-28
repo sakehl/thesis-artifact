@@ -1,0 +1,254 @@
+ requires a>0 && b>0; //~|\label{ex1:req}|
+ ensures a>=b ==> \result == a;  //~|\label{ex1:ens}|
+ ensures a<b ==> \result == b;  //~|\label{ex1:ens-2}|
+ ensures \result>0;  //~|\label{ex1:ens-3}|
+int max(int a, int b) {
+ if(a>=b){
+  return a;
+ } else {
+  return b;
+}}
+
+ context xs != null && xs.length >= 1; //~|\label{ex2:array}|
+ context Perm(xs[0], write); //~|\label{ex2:perm}|
+ ensures xs[0] == \old(xs[0])+1; //~ |\label{ex2:old}|
+void incr(int[] xs) {
+ xs[0] = xs[0]+1;
+}
+
+void f() {
+ int[] xs = new int[1];//~ |\label{line:ex3-initialise}|
+ xs[0] = 41;
+ int[] ys = new int[1];
+ ys[0] = 15;//~ |\label{line:ex3-initialise-2}|
+ incr(xs);//~ |\label{line:ex3-call-1}|
+ incr(ys);//~ |\label{line:ex3-call-2}|
+ assert xs[0] == 42 && ys[0] == 16; //~ |\label{line:ex3-assert-1}|
+}
+ context xs != null && xs.length >= 1 && ys != null && ys.length >= 1; //~|\label{line:ex4-pre}|
+ context Perm(xs[0], 2\3) ** Perm(ys[0], 2\3); //~|\label{line:ex4-perm}|
+ ensures \result == (xs[0]+ys[0])/2; //~ |\label{line:ex4-post}|
+int avr(int[] xs, int[] ys) {
+ return (xs[0]+ys[0])/2;
+}
+
+void g() {
+ int[] xs = new int[1];//~ |\label{line:ex4-initialise-1}|
+ int[] ys = new int[1];//~ |\label{line:ex4-initialise-2}|
+ xs[0] = 41;
+ ys[0] = 43;
+ int res = avr(xs, ys);//~ |\label{line:ex4-call}|
+ assert res == 42; //~ |\label{line:ex4-assert}|
+}
+
+ decreases n; //~|\label{ex5:decreases}|
+ requires n>=0;
+pure int nth_fib(int n) = n<=1 ? n : nth_fib(n-1) + nth_fib(n-2); //~|\label{ex5:pure}|
+
+void call_fib() {
+ assert nth_fib(0) == 0; //~|\label{ex5:call-1}|
+ assert nth_fib(1) == 1; //~|\label{ex5:call-2}|
+ assert nth_fib(2) == 1; //~|\label{ex5:call-3}|
+}
+
+void h() {
+ int[] xs = new int[1];//~ |\label{line:ex6-initialise}|
+ int[] ys = new int[1];//~ |\label{line:ex6-initialise-2}|
+ xs[0] = 41;
+ ys[0] = 43;
+ // This models the checking of the precondition of the avr function
+ exhale xs != null && xs.length >= 1 && ys != null && ys.length >= 1 ** //~|\label{line:ex6-exhale-1}|
+  Perm(xs[0], 2\3) ** Perm(ys[0], 2\3); //~|\label{line:ex6-exhale-2}|
+ int res;
+ // This models the assuming of the postcondition of the avr function
+ inhale xs != null && xs.length >= 1 && ys != null && ys.length >= 1 ** //~|\label{line:ex6-inhale-1}|
+  Perm(xs[0], 2\3) ** Perm(ys[0], 2\3) ** res == (xs[0]+ys[0])/2; //~|\label{line:ex6-inhale-2}|
+ assert res == 42; //~ |\label{line:ex6-assert}|
+}
+
+ requires n>=0;
+ ensures \result == nth_fib(n); //~|\label{ex7:ensures}|
+ decreases; //~|\label{ex7:func-decreases}|
+int fib(int n) {
+ if(n<=1) return n;
+ int prev = 0;
+ int current = 1;
+
+  loop_invariant 2 <= i && i<=n+1; //~|\label{ex7:loop-inv-1}|
+  loop_invariant prev == nth_fib(i-2) && current == nth_fib(i-1); //~|\label{ex7:loop-inv-2}|
+  decreases n+1-i; //~|\label{ex7:loop-decreases}|
+ for(int i=2; i<n+1; i++){
+  int next = prev + current;
+  prev = current;
+  current = next;
+ }
+ return current;
+}
+  
+ requires n>=0;
+ ensures \result != null && \result.length == n+1; //~|\label{ex8:ensures}|
+ ensures (\forall* int j; 0<=j && j<n+1; Perm(\result[j], write)); //~|\label{ex8:forall-perm}|
+ ensures (\forall* int j; 0<=j && j<n+1; \result[j] == nth_fib(j)); //~|\label{ex8:forall-ensures}|
+ decreases;
+int[] fib_array(int n) {
+ int[] result = new int[n+1];
+ result[0] = 0;
+ if(n>0) result[1] = 1;
+ if(n<=1) return result;
+
+  loop_invariant 2 <= i && i<=n+1;
+  loop_invariant (\forall* int j; 0<=j && j<n+1; Perm(result[j], write));//~|\label{ex8:forall-perm-loop}|
+  loop_invariant (\forall int j; 0<=j && j<i; result[j] == nth_fib(j)); //~|\label{ex8:forall-loop}|
+  decreases n+1-i;
+ for(int i=2; i<n+1; i++){
+  result[i] = result[i-1] + result[i-2];
+ }
+ return result;
+}
+
+// Reverse all the members of a list in parallel
+ context_everywhere a != null && a.length == n;
+ context (\forall* int i; 0<=i && i<n; Perm(a[i], write));
+ ensures (\forall int i; 0<=i && i<n; a[i] == \old(a[n-i-1])); //~|\label{ex4:ensures}|
+ decreases;
+void reverse(int[] a, int n){
+ par threads(int tid=0..n) //~|\label{ex4:par}|
+  requires Perm(a[tid], 1\2); //~|\label{ex4:par-contract-1}|
+  requires Perm(a[n-tid-1], 1\2);
+  ensures Perm(a[tid], write);
+  ensures a[tid] == \old(a[n-tid-1]); //~|\label{ex4:par-contract-2}|
+ {
+  int old = a[n-tid-1];
+  barrier(threads) //~|\label{ex4:barrier}|
+   requires Perm(a[n-tid-1], 1\2); //~|\label{ex4:barrier-1}|
+   ensures Perm(a[tid], 1\2); //~|\label{ex4:barrier-2}|
+  {}
+  a[tid] = old; //~|\label{ex4:write}|
+ }
+}
+
+class LinkedList { //~|\label{ex9:linkedlist-1}|
+ int value;
+ LinkedList next;
+} //~|\label{ex9:linkedlist-2}|
+
+resource state(LinkedList l) = Perm(l.value, write) ** Perm(l.next, write) ** //~|\label{ex9:pred}|
+ (l.next != null ==> state(l.next)) ** l.value>=0; //~|\label{ex9:pred-2}|
+
+ requires l != null ** state(l); //~|\label{ex9:pre}|
+ ensures \result >= 0; //~|\label{ex9:post}|
+int sum(LinkedList l) { //~|\label{ex9:func}|
+ int s = 0;
+ LinkedList p = l;
+  loop_invariant p != null ==> state(p); //~|\label{ex9:loop}|
+  loop_invariant s >= 0;
+ while(p != null) {
+  unfold state(p); //~|\label{ex9:unfold}|
+  s = s + p.value;
+  p = p.next;
+ }
+  return s;
+}
+
+ requires n>=0;
+ ensures nth_fib(n) >= 0; //~|\label{ex10:ensures}|
+ decreases n;
+void lemma_fib_nonnegative(int n){
+ if(n>1){
+  lemma_fib_nonnegative(n-1); //~|\label{ex10:rec1}|
+  lemma_fib_nonnegative(n-2); //~|\label{ex10:rec2}|
+ }
+}
+
+ requires n>=0;
+ ensures nth_fib(n) == 0; //~|\label{ex11:ensures}|
+void lemma_wrong(int n){
+ lemma_wrong(n); // |$\lightning$| this leads to unsoundness
+}
+
+adt List<T> {
+ // constructors
+ pure List<T> nil(); // The empty list |\label{ex12:cons1}|
+ pure List<T> cons(T head, List<T> tail); // Prepend head to tail |\label{ex12:cons2}|
+
+ // deconstructors
+ pure T head(List<T> l); //~|\label{ex12:decons1}|
+ pure List<T> tail(List<T> l); //~|\label{ex12:decons2}|
+
+ // axioms
+ axiom (\forall T h, List<T> t; head(cons(h, t)) == h); // Defines behaviour of head |\label{ex12:axiom1}|
+ axiom (\forall T h, List<T> t; tail(cons(h, t)) == t); // Defines behaviour of tail |\label{ex12:axiom2}|
+ axiom (\forall T h, List<T> t; cons(h, t) != nil()); // Constructors are not the same |\label{ex12:axiom3}|
+ axiom (\forall T h1, T h2, List<T> t1, List<T> t2; // Cons is injective |\label{ex12:axiom4}|
+  (cons(h1, t1) == cons(h2, t2)) ==> (h1 == h2 && t1 == t2)); 
+}
+
+ requires l != List<T>.nil();
+pure T head<T>(List<T> l) { return List<T>.head(l);}
+ 
+ requires l != List<T>.nil();
+pure List<T> tail<T>(List<T> l) { return List<T>.tail(l);}
+
+pure bool nonneg_list(List<int> l) {
+ return l == List<int>.nil() ? true :
+   head<int>(l) >= 0 && nonneg_list(tail<int>(l));
+}
+ 
+ requires nonneg_list(l);
+ ensures \result >= 0;
+int sum(List<int> l) { //~|\label{ex12:sum}|
+ int s = 0;
+ List<int> p = l;
+  loop_invariant nonneg_list(p); //~|\label{ex12:loop-inv}|
+  loop_invariant s >= 0; //~|\label{ex12:loop-inv-2}|
+ while(p != List<int>.nil()) {
+  s = s + head<int>(p);
+  p = tail<int>(p);
+ }
+  return s;
+}
+
+ requires x > 1 && y > 1 && x > y;
+void nonlinear(int x, int y){
+ assert x*x > x*y; // Succeeds |\label{ex13:nonlinear1}|
+ [/expect assertFailed:false] assert (x-1)*x > (x-1)*y;[/end] // This will (wrongly) fail |\label{ex13:nonlinear2}|
+}
+
+ context local_size0 == 32;
+ context inp != null && inp.length == n+2 && out != null && out.length == n;
+ context n == num_groups0*local_size0;
+ context (\forall* int bid, int tid; 0<=bid && bid<n/32 && 0<=tid && tid<32;
+   Perm({:inp[32*bid+tid]:}, read)) **
+  (\forall* int bid, int tid; 0<=bid && bid<n/32 && 0<=tid && tid<32;
+   Perm({:inp[32*bid+tid+1]:}, read)) **
+  (\forall* int bid, int tid; 0<=bid && bid<n/32 && 0<=tid && tid<32;
+   Perm({:inp[32*bid+tid+2]:}, read));
+ context (\forall* int bid, int tid; 0<=bid && bid<n/32 && 0<=tid && tid<32;
+  Perm({:out[32*bid+tid]:}, write)); //~|\label{ex14:write-function}|
+ ensures (\forall int bid, int tid; 0<=bid && bid<n/32 && 0<=tid && tid<32;
+  {:out[32*bid+tid]:} == 
+  (inp[32*bid+tid] + inp[32*bid+tid+1] + inp[32*bid+tid+2])/3);
+void blur(int[] inp, int[] out, int n, int num_groups0, int local_size0) {
+ par thread_blocks(int bid=0..num_groups0)
+  context (\forall* int tid; 0<=tid && tid<32; Perm({:inp[32*bid+tid]:}, read)) **
+   (\forall* int tid; 0<=tid && tid<32; Perm({:inp[32*bid+tid+1]:}, read)) **
+   (\forall* int tid; 0<=tid && tid<32; Perm({:inp[32*bid+tid+2]:}, read));
+  context (\forall* int tid; 0<=tid && tid<32; Perm({:out[32*bid+tid]:}, write)); //~|\label{ex14:write-outer}|
+  ensures (\forall int tid; 0<=tid && tid<32; {:out[32*bid+tid]:} == 
+    (inp[32*bid+tid] + inp[32*bid+tid+1] + inp[32*bid+tid+2])/3); {
+  par threads(int tid=0..local_size0)
+   context Perm({:inp[32*bid+tid]:}, read) ** Perm({:inp[32*bid+tid+1]:}, read)
+    ** Perm({:inp[32*bid+tid+2]:}, read);
+   context Perm({:out[32*bid+tid]:}, write); //~|\label{ex14:write-inner}|
+   ensures {:out[32*bid+tid]:} == 
+    (inp[32*bid+tid] + inp[32*bid+tid+1] + inp[32*bid+tid+2])/3; {
+   int gtid = local_size0*bid+tid;
+   out[gtid] = (inp[gtid] + inp[gtid+1] + inp[gtid+2]) / 3;
+}}}
+
+pure bool a(int x);
+
+void fail_quantifier(){
+ assume (\forall int x, int y; a(5*x+y));
+[/expect assertFailed:false] assert a(5*1+2);[/end] //~|\label{ex15:assert}|
+}

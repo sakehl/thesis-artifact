@@ -6,12 +6,12 @@ include(CTest)
 set(CMAKE_CXX_STANDARD 11)  # or newer
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
-list(APPEND CMAKE_PREFIX_PATH ../haliver/install)
+list(APPEND CMAKE_PREFIX_PATH ../Halide/install)
 
 find_package(Halide REQUIRED)
 
 set(OUTFILE halide.out)
-set(VCT "../vercors/bin/vct" CACHE STRING "Default value for VCT")
+set(VCT "/haliver/vercors/bin/vct" CACHE STRING "Default value for VCT")
 set(VERCORS ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=1200 --dev-assert-timeout 60)
 set(VERCORS_PADRE ${VCT} --silicon-quiet --no-infer-heap-context-into-frame --dev-total-timeout=3600 --dev-assert-timeout 60)
 # set(CMAKE_BINARY_DIR "/home/lars/data/HaliVerTests/Unittests/build" CACHE STRING "Default value for VCT")
@@ -386,6 +386,12 @@ function(build_lesson)
   target_link_libraries(${UT_TARGET} PRIVATE Halide::Halide)
 
   add_custom_command(
+    OUTPUT tutorial
+    COMMAND mkdir -p tutorial
+    VERBATIM
+  )
+
+  add_custom_command(
     OUTPUT ${UT_TARGET}_all_files
     COMMAND ./${UT_TARGET}
     DEPENDS ${UT_TARGET}
@@ -394,7 +400,7 @@ function(build_lesson)
 
   add_custom_target(
     ${UT_TARGET}_all ALL
-    DEPENDS ${UT_TARGET}_all_files
+    DEPENDS ${UT_TARGET}_all_files tutorial
   )
 endfunction()
 

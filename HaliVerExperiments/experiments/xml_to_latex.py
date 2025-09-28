@@ -1,6 +1,10 @@
+import argparse
 import xml.etree.ElementTree as ET
 import subprocess
 import re
+import os
+
+DIR = os.path.dirname(os.path.abspath(__file__))
 
 def parse_xml_exp(input_xml):
     tree = ET.parse(input_xml)
@@ -311,19 +315,19 @@ def generate_latex_main():
     latex.append("\\begin{table}[t]")
     latex.append("\\centering")
     latex.append("\\caption{\\label{tab:chp6-results-exp-mem}Verification results for the experiments of HaliVer from Chapter 4.}")
-    latex.append("\\input{results/exp-mem.tex}")
+    latex.append("\\input{" + DIR + "/results/exp-mem.tex}")
     latex.append("\\end{table}")
 
     latex.append("\\begin{table}[t]")
     latex.append("\\centering")
     latex.append("\\caption{\\label{tab:chp6-results-exp}Verification results for the experiments of HaliVer from Chapter 4.}")
-    latex.append("\\input{results/exp.tex}")
+    latex.append("\\input{" + DIR + "/results/exp.tex}")
     latex.append("\\end{table}")
 
     latex.append("\\begin{table}[t]")
     latex.append("\\centering")
     latex.append("\\caption{\\label{tab:chp6-results}Verification results for \\texttt{step}, \\texttt{sub\\_direction}, \\texttt{solve\\_direction}, and \\texttt{perform\\_iteration} produced by \\haliver. We use abbreviations for versions with concrete bounds (\\textbf{CB}), nonconcrete bounds (\\textbf{NCB}), \\textbf{unique} and const type qualifiers, and no type qualifiers (\\textbf{Normal}).}")
-    latex.append("\\input{results/padre.tex}")
+    latex.append("\\input{" + DIR + "/results/padre.tex}")
     latex.append("\\end{table}")
     latex.append("\\end{document}")
     return "\n".join(latex)
@@ -331,16 +335,16 @@ def generate_latex_main():
 def main(input_xml_exp, input_xml_padre, output_tex):
     experiments, experiments_mem  = parse_xml_exp(input_xml_exp)
     latex_exp = generate_latex_tabular_exp(experiments_mem, True)
-    with open("results/exp-mem.tex", 'w') as f:
+    with open(f"{DIR}/results/exp-mem.tex", 'w') as f:
         f.write("\n".join(latex_exp))
 
     latex_exp = generate_latex_tabular_exp(experiments, False)
-    with open("results/exp.tex", 'w') as f:
+    with open(f"{DIR}/results/exp.tex", 'w') as f:
         f.write("\n".join(latex_exp))
 
     experiments_padre = parse_xml(input_xml_padre)
     latex_padre= generate_latex_padre(experiments_padre)
-    with open("results/padre.tex", 'w') as f:
+    with open(f"{DIR}/results/padre.tex", 'w') as f:
         f.write(latex_padre)
 
     latex_main = generate_latex_main()
@@ -348,12 +352,19 @@ def main(input_xml_exp, input_xml_padre, output_tex):
         f.write(latex_main)
 
     # Generate PDF using pdflatex
-    subprocess.run(['pdflatex', '-output-directory', 'results', output_tex])
+    subprocess.run(['pdflatex', '-output-directory', f'{DIR}/results', output_tex])
     out_base = output_tex.replace(".tex", "")
     subprocess.run(['rm', f"{out_base}.aux", f"{out_base}.log"])
 
 if __name__ == "__main__":
-    input_xml_exp = "results/exp-2025-03-18.xml" 
-    input_xml_padre = "results/padre-2025-03-18.xml"
-    output_tex = "results/table.tex"
+    parser = argparse.ArgumentParser(description='Run HaliVer experiments')
+    parser.add_argument('--timestamp', 
+                       default="2025-03-18", 
+                       help='Timestamp for output files (default: 2025-03-18)')
+    args = parser.parse_args()
+    timestamp = args.timestamp
+    
+    input_xml_exp = f"{DIR}/results/exp-{timestamp}.xml" 
+    input_xml_padre = f"{DIR}/results/padre-{timestamp}.xml"
+    output_tex = f"{DIR}/results/table.tex"
     main(input_xml_exp, input_xml_padre, output_tex)

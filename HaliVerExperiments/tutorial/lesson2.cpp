@@ -37,8 +37,8 @@ int main(int argc, char *argv[]) {
 
   // First verify the front-end approach, where we want to prove all sorts of
   // correctness properties.
-  h.translate_to_pvl("lesson2_h_front_0.pvl", {inp}, {p1, p2});
-  // $ vct build/lesson2_h_front_0.pvl
+  h.translate_to_pvl("tutorial/lesson2_h_front_0.pvl", {inp}, {p1, p2});
+  // $ vct build/tutorial/lesson2_h_front_0.pvl
   // This actually does not verify
   // Looking at the output VerCors says this is wrong
   //                [-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ int main(int argc, char *argv[]) {
   // Which makes sense, since for x<0 this is indeed not true and we did not say
   // anything about h_min_x (h_min_0). So we can add the following pre-condition
   Annotation r1 = requires(h_min_x >= 0);
-  h.translate_to_pvl("lesson2_h_front_1.pvl", {inp}, {r1, p1, p2});
-  // $ vct build/lesson2_h_front_1.pvl
+  h.translate_to_pvl("tutorial/lesson2_h_front_1.pvl", {inp}, {r1, p1, p2});
+  // $ vct build/tutorial/lesson2_h_front_1.pvl
   // Which verifies.
 
   // For the back-end approach we set concrete values again
@@ -60,9 +60,9 @@ int main(int argc, char *argv[]) {
   set_bounds({{0, nx}, {0, ny}}, inp);
   // it also possible to just check on memory safety first, which does not need
   // any annotations (and discards them actually) so let's do that.
-  h.compile_to_c("lesson2_h_0.c", {inp}, {}, "h", Target(),
+  h.compile_to_c("tutorial/lesson2_h_0.c", {inp}, {}, "h", Target(),
                  true /*Check only memory safety*/);
-  // $ vct build/lesson2_h_0.c
+  // $ vct build/tutorial/lesson2_h_0.c
   // Hey this doesn't verify! What happened? VerCors says
   //       [---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   // 212    loop_invariant (\forall* int _h_s0_x_forall, int _h_s0_y_forall;
@@ -88,32 +88,32 @@ int main(int argc, char *argv[]) {
   ny = 100;
   set_bounds({{0, nx}, {0, ny}}, h.output_buffer());
   set_bounds({{0, nx}, {0, ny}}, inp);
-  h.compile_to_c("lesson2_h_1.c", {inp}, {}, "h", Target(),
+  h.compile_to_c("tutorial/lesson2_h_1.c", {inp}, {}, "h", Target(),
                  true /*Check only memory safety*/);
-  // $ vct build/lesson2_h_1.c
+  // $ vct build/tutorial/lesson2_h_1.c
   // Which does verifies
 
   // Now with properties
-  h.compile_to_c("lesson2_h_2.c", {inp}, {p1, p2}, "h");
-  // $ vct build/lesson2_h_2.c
+  h.compile_to_c("tutorial/lesson2_h_2.c", {inp}, {p1, p2}, "h");
+  // $ vct build/tutorial/lesson2_h_2.c
   // Which also verifies
 
   // However, if g was not inlined, we need intermediate annotations for g
   g.compute_root();
-  h.compile_to_c("lesson2_h_3.c", {inp}, {p1, p2}, "h");
-  // $ vct build/lesson2_h_3.c
+  h.compile_to_c("tutorial/lesson2_h_3.c", {inp}, {p1, p2}, "h");
+  // $ vct build/tutorial/lesson2_h_3.c
   // This fails verification, since it lacks information about g. We add
   g.ensures(g(x, y) == inp(x, y) * inp(x, y) + 1);
-  h.compile_to_c("lesson2_h_4.c", {inp}, {p1, p2}, "h");
-  // $ vct build/lesson2_h_4.c
+  h.compile_to_c("tutorial/lesson2_h_4.c", {inp}, {p1, p2}, "h");
+  // $ vct build/tutorial/lesson2_h_4.c
   // Which verifies
 
   // We can also add scheduling, and still verify the files. For instance
   g.reorder(y, x);
   h.fuse(x, y, xy);
   h.update().parallel(x);
-  h.compile_to_c("lesson2_h_5.c", {inp}, {p1, p2}, "h");
-  // $ vct build/lesson2_h_5.c
+  h.compile_to_c("tutorial/lesson2_h_5.c", {inp}, {p1, p2}, "h");
+  // $ vct build/tutorial/lesson2_h_5.c
 }
 
 void set_bounds(std::vector<std::tuple<int, int>> dims,

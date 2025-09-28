@@ -1,0 +1,16 @@
+ decreases;
+pure int inp(int x0, int x1);
+
+ ensures \result == 0; //~|\label{line:count0-ens}|
+ decreases;
+pure int count0(int x) = 0; //~|\label{line:count0}|
+
+ requires 0 <= r && r <= 0 + 10; // RDom bounds |\label{line:count-rdom}|
+ ensures (0 <= \result && \result <= r); // Reduction invariant |\label{line:count-rinv}|
+ decreases r; //~|\label{line:decreases-count}|
+pure int count1r(int x, int r) = r == 0 ? count0(x) //~|\label{line:count-r-1}|
+ : inp(x, r - 1) > 0 ? count1r(x, r - 1) + 1 : count1r(x, r - 1); //~|\label{line:count-r-2}|
+
+ ensures 0 <= \result && \result <= 10; //~|\label{line:count1-ens}|
+ decreases;
+pure int count1(int x) = count1r(x, 0 + 10); // Final count function |\label{line:count1}|

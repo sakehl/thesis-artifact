@@ -1,0 +1,23 @@
+ requires a >= 0;
+ requires b > 0;
+ requires a < max_a;
+ ensures a*b <= (max_a-1)*b;
+ ensures \result;
+ decreases b;
+pure bool lemma_nonlinear(int a, int b, int max_a) = 
+  b>1 ? lemma_nonlinear(a, b-1, max_a) : true;
+  
+ requires x-x_min >= 0 && x-x_min < x_extent;
+ requires y-y_min >= 0 && y-y_min < y_extent;
+ requires x_stride > 0;
+ requires y_stride >= x_extent * x_stride;
+ 
+ ensures 0 <= (x-x_min)*x_stride + (y-y_min)*y_stride;
+ ensures (x-x_min)*x_stride + (y-y_min)*y_stride < y_stride*y_extent;
+ ensures \result;
+ decreases;
+pure bool lemma_2d_access(
+ int x, int x_min, int x_stride, int x_extent,
+ int y, int y_min, int y_stride, int y_extent) =
+  lemma_nonlinear(x-x_min, x_stride, x_extent) &&
+  lemma_nonlinear(y-y_min, y_stride, y_extent);

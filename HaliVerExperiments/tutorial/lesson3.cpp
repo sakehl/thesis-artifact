@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
   count.ensures(0 <= count(x) && count(x) <= 10);
 
   // First verify with the front-end approach
-  count.translate_to_pvl("lesson3_count_front_0.pvl", {inp}, {});
-  // vct build/lesson3_count_front_0.pvl
+  count.translate_to_pvl("tutorial/lesson3_count_front_0.pvl", {inp}, {});
+  // vct build/tutorial/lesson3_count_front_0.pvl
 
   // For the back-end approach we set concrete values again
   int nx = 42;
@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
   set_bounds({{0, nx}, {0, ny}}, inp);
   // ny should be atleast 10, since we look at 10 values of a row of inp. (r_max
   // == 10)
-  count.compile_to_c("lesson3_count_0.c", {inp}, {}, "count");
-  // vct build/lesson3_count_0.c
+  count.compile_to_c("tutorial/lesson3_count_0.c", {inp}, {}, "count");
+  // vct build/tutorial/lesson3_count_0.c
   // Which verifies.
 
   // Now, if we know more about the input, for instances that if: x>y then
@@ -56,11 +56,11 @@ int main(int argc, char *argv[]) {
   // We can be more specific.
   count.invariant(count(x) == min(max(x, 0), r));
   count.ensures(count(x) == min(max(x, 0), 10));
-  count.translate_to_pvl("lesson3_count_front_1.pvl", {inp}, {});
-  // vct build/lesson3_count_front_1.pvl
+  count.translate_to_pvl("tutorial/lesson3_count_front_1.pvl", {inp}, {});
+  // vct build/tutorial/lesson3_count_front_1.pvl
 
-  count.compile_to_c("lesson3_count_1.c", {inp}, {}, "count");
-  // vct build/lesson3_count_1.c
+  count.compile_to_c("tutorial/lesson3_count_1.c", {inp}, {}, "count");
+  // vct build/tutorial/lesson3_count_1.c
 
   // In general, it would be nice to be specific for _any_ input. For this we
   // would need sequences from VerCors:

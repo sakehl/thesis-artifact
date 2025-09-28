@@ -1,0 +1,42 @@
+// A vector of type T
+adt vector4<T> {
+ pure T vector_loc(vector4<T> v, int i);
+}
+
+// Access a vector of length 4
+ decreases;
+ requires 0 <= i && i < 4;
+pure T v4loc<T>(vector4<T> a, int i) = vector4<T>.vector_loc(a, i);
+
+// Vector creation method
+ decreases;
+ ensures v4loc<T>(\result, 0) == x0 && v4loc<T>(\result, 1) == x1 &&
+  v4loc<T>(\result, 2) == x2 && v4loc<T>(\result, 3) == x3;
+pure vector4<T> make_v4<T>(T x0, T x1, T x2, T x3, T x4, T x5, T x6, T x7);
+
+// Format of vector operators
+// When `op` is a division operator, we additional require that
+// v4loc<T>(y, 0) != 0 && v4loc<T>(y, 1) != 0 && 
+// v4loc<T>(y, 2) != 0 && v4loc<T>(y, 3) != 0
+//~ decreases;
+//~ ensures v4loc<T>(\result, 0) == v4loc<T>(x, 0) `op` v4loc<T>(y, 0)
+//~  && v4loc<T>(\result, 1) == v4loc<T>(x, 1) `op` v4loc<T>(y, 1)
+//~  && v4loc<T>(\result, 2) == v4loc<T>(x, 2) `op` v4loc<T>(y, 2)
+//~  && v4loc<T>(\result, 3) == v4loc<T>(x, 3) `op` v4loc<T>(y, 3);
+//~pure vector4<T> op<T>(vector4<T> x, vector4<T> y);|\label{lst:vector-op}|
+
+// Update vector
+ decreases;
+ requires i >= 0 && i < 4;
+ ensures v4loc<T>(\result, 0) == (i == 0 ? v : v4loc<T>(x, 0));
+ ensures v4loc<T>(\result, 1) == (i == 1 ? v : v4loc<T>(x, 1));
+ ensures v4loc<T>(\result, 2) == (i == 2 ? v : v4loc<T>(x, 2));
+ ensures v4loc<T>(\result, 3) == (i == 3 ? v : v4loc<T>(x, 3));
+pure vector4<T> updatev4<T>(vector4<T> x, int i, T v);
+
+ decreases;
+ ensures v4loc<int>(\result, 0) == v4loc<int>(x, 0) + v4loc<int>(y, 0)
+  && v4loc<int>(\result, 1) == v4loc<int>(x, 1) + v4loc<int>(y, 1)
+  && v4loc<int>(\result, 2) == v4loc<int>(x, 2) + v4loc<int>(y, 2)
+  && v4loc<int>(\result, 3) == v4loc<int>(x, 3) + v4loc<int>(y, 3);
+pure vector4<int> plus_op(vector4<int> x, vector4<int> y);

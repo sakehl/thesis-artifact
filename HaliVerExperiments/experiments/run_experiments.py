@@ -3,6 +3,7 @@ import time
 from lxml import etree as ET
 from datetime import datetime
 import os
+import argparse
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 VCT = f"{DIR}/../../vercors/bin/vct"
@@ -130,8 +131,22 @@ def padre(output_xml, i, non_unique=False, cb=False):
     main(input_files, i, command_template, output_xml, tags)
 
 if __name__ == "__main__":
-    for i in range(5):
-        timestamp = "2025-03-18"
+    parser = argparse.ArgumentParser(description='Run HaliVer experiments')
+    parser.add_argument('--timestamp', 
+                       default="2025-03-18", 
+                       help='Timestamp for output files (default: 2025-03-18)')
+
+    parser.add_argument('--repetitions', 
+                       default=1, 
+                       type=int,
+                       help='Number of repetitions for each experiment (default: 1)')
+
+    args = parser.parse_args()
+    timestamp = args.timestamp
+    repetitions = args.repetitions
+    assert repetitions > 0
+
+    for i in range(repetitions):
         file = f"results/padre-{timestamp}.xml"
         padre(file, i)
         padre(file, i, non_unique=True)

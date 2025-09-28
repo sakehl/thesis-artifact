@@ -1,0 +1,199 @@
+void tests(){
+int[][] A = new int[3][4];
+assume
+(\forall int x_1, int x_2; 0<=x_1 && x_1<4 && 0<=x_2 && x_2<3 && x_2%2 == 0; {:A[x_2][x_1]:}>0)
+;
+int [] A_f = new int[12];
+assume
+(\forall int x_1, int x_2; 0<=x_1 && x_1<4 && 0<=x_2 && x_2<3 && x_2%2==0; {:A_f[4*x_2+ x_1]:}>0)
+;
+assert
+(\forall int x; 0<=x && x<4*3 && (x/4)%2==0; {:A_f[x]:}>0)
+;
+int n = 4;
+inhale n==4 &&
+(\forall int x_1, int x_2; 0<=x_1 && x_1<n && 0<=x_2 && x_2<3 && x_2%2==0; {:A_f[4*x_2+ x_1]:}>0)
+;
+}
+
+void tests_parblocks(){
+int[] a = new int[12];
+int bid=0;
+// Example 6.2.2 #1
+par threads(int tid=0..4)
+ context Perm({:a[bid*4+tid]:}, write);
+ requires {:a[bid*4+tid]:} == 0;
+ ensures {:a[bid*4+tid]:} > 0; 
+{
+ a[bid*4+tid] = 1+bid*4+tid;
+}
+// End example
+a = new int[12];
+// Example 6.2.2 #2
+int nondet;
+assume 0 <= nondet && nondet < 2;
+if(nondet==0){
+ // Check pre conditions for whole block
+ inhale (\forall* int tid; 0<=tid && tid<4; Perm({:a[bid*4+tid]:}, write)) **
+  (\forall int tid; 0<=tid && tid<4; {:a[bid*4+tid]:} == 0);
+ // Assume post conditions for the whole block
+ exhale (\forall* int tid; 0<=tid && tid<4; Perm({:a[bid*4+tid]:}, write)) **
+  (\forall int tid; 0<=tid && tid<4; {:a[bid*4+tid]:} > 0);
+} else {
+ int tid;
+ assume 0 <= tid && tid <4;
+ // The following translations checks the code per thread in isolation
+ bool once = false;
+  // If once is false, the preconditions are checked
+  loop_invariant !once ==> Perm(a[bid*4+tid], write) ** a[bid*4+tid] == 0;
+  // If once is true, the postconditions are checked
+  loop_invariant once ==> Perm(a[bid*4+tid], write) ** a[bid*4+tid] > 0;
+ while(!once){
+  a[bid*4+tid] = 1+bid*4+tid;
+  once = true;
+ }
+ // assume false, such that only the result of the nondet=0 branch remains
+ assume false;
+}
+// End example
+}
+
+void tests_linear_pattern(){
+int [] A_f = new int[12];
+assume
+(\forall int x_1, int x_2; 0<=x_1 && x_1<4 && 0<=x_2 && x_2<3 && x_2%2==0; {:A_f[4*x_2+ x_1]:}>0)
+;
+int n_1 = 4;
+int n_2 = 3;
+int a_1 = 1;
+int a_2 = 4;
+inhale (a_2 == 4 && a_1 == 1 && n_1 == 4 && n_2 == 3) &&
+(\forall int x_1, int x_2;0<=x_1&&x_1<n_1 && 0<=x_2&&x_2<n_2 && x_2%2==0; {:A_f[a_2*x_2+a_1*x_1]:}>0)
+;
+assert
+(\forall int x; 0<=x && x<n_1*n_2 && (x/a_2)%2==0 && x%a_2%a_1==0; {:A_f[x]:}>0)
+;
+int[] A = new int[4*2*10];
+assume
+(\forall int x_1, int x_2, int x_3; 0<=x_1 && x_1<4 && 0<=x_2 && 0<=x_3 && x_3<2 && 4*x_2+x_1<10;
+   {:A[10*x_3+4*x_2+x_1]:}>x_2)
+;
+assert 
+(\forall int x; ((x%10)%4)%1==0 && 0<=x && x<10*2 && ((x%10)%4)/1<4 &&
+ 4*((x%10)/4)+((x%10)%4)/1<10;
+ {:A[x]:}>(x%10)/4)
+;
+assert 
+(\forall int x; 0<=x && x<10*2; {:A[x]:}>(x%10)/4)
+;
+}
+
+void section_implementation(){
+int n_1, n_2;
+inhale n_1>0 && n_2>0;
+int[] A = new int[n_1*n_2];
+inhale n_1 == 4 && n_2 == 3 &&
+(\forall int x_1, int x_2; 0 <= x_1 && x_1<n_1 && 0 <= x_2 && x_2<n_2; {:A[x_1+x_2*n_1]:}>0)
+;
+}
+
+ requires A != null && A.length == n_1*n_2;
+ requires n_1>0 && n_2>0;
+ requires (\forall* int x_1, int x_2; 0<=x_1&&x_1<n_1 && 0<=x_2&&x_2<n_2; Perm({:A[n_1*x_2+ x_1]:},read));
+ //~ ...
+ requires n_1>0 && n_2>0;
+ requires (\forall int x_1, int x_2; 0<=x_1&&x_1<n_1 && 0<=x_2&&x_2<n_2; {:A[n_1*x_2+ x_1]:}==x_2);
+int h(int[] A, int n_1, int n_2){
+ //~ ...
+}
+
+pure int f(int a, int b, int c);
+pure int g(int a);
+
+void test_example(){
+int na;
+inhale na>0 &&
+(\forall int xa_1, int xa_2, int xb_1, int y;
+ 0<=xa_1 && xa_1<10 && 0<=xa_2 && xa_2<na && g(xb_1)>=0 && y%3==1;
+ {:f(xa_1+xa_2*10, 2*xb_1+3, y):} >= 0)
+;
+assert 
+(\forall int xa, int xb, int y ;
+ 0<=xa && xa<10*na && (xb-3)%2==0 && g((xb-3)/2) >= 0 && y%3==1;
+ {:f(xa, xb, y):} >= 0)
+;
+}
+
+ context_everywhere a != null && a.length == n*m;
+ context_everywhere n == 10;
+ context (\forall* int x_1, int x_2; 
+      0 <= x_1 && x_1<n && 0 <= x_2 && x_2<m;
+      Perm({:a[n*x_2+x_1]:}, write));
+void test_alternatives(int[] a, int n, int m){
+ loop_invariant 0 <= j && j <= m;
+ loop_invariant (\forall* int x_1, int x_2; 
+      0 <= x_1 && x_1<n && 0 <= x_2 && x_2<m;
+      Perm({:a[n*x_2+x_1]:}, write));
+ //~loop_invariant ...
+ loop_invariant (\forall int x_1, int x_2; 
+  0 <= x_1 && x_1<n && 0 <= x_2 && x_2<j && x_1+x_2<10; {:a[n*x_2+x_1]:} == x_1+x_2);
+for(int j=0; j<m; j++){
+  loop_invariant 0 <= i && i <= n;
+  loop_invariant (\forall* int x_1; 0 <= x_1 && x_1<n; Perm({:a[n*j+x_1]:}, write));
+  //~loop_invariant ...
+  loop_invariant (\forall int x_1; 
+   0 <= x_1 && x_1<i && x_1+j<10; {:a[n*j+x_1]:} == x_1+j);
+ for(int i=0; i<n; i++){
+  if(i+j<10){
+   a[n*j+i] = i+j;
+}}}
+
+ loop_invariant 0 <= j && j <= m;
+ loop_invariant (\forall* int x_1, int x_2; 
+      0 <= x_1 && x_1<n && 0 <= x_2 && x_2<m;
+      Perm({:a[n*x_2+x_1]:}, write));
+ //~loop_invariant ...
+ loop_invariant (\forall int x;
+  0 <= x && x<n*j && x%n + x/n<10; {:a[x]:} == x%n + x/n);
+for(int j=0; j<m; j++){
+  loop_invariant 0 <= i && i <= n;
+  loop_invariant (\forall* int x_1; 0 <= x_1 && x_1<n; Perm({:a[n*j+x_1]:}, write));
+  //~loop_invariant ...
+  loop_invariant (\forall int x;
+    0 <= x-n*j && x-n*j<i && x-n*j+j<10; {:a[x]:} == x-n*j+j);
+ //~...
+ for(int i=0; i<n; i++){
+  if(i+j<10){
+   a[n*j+i] = i+j;
+  }
+ }
+}
+}
+
+pure int idx(int x_1, int x_2, int n) = x_2*n+x_1;
+//~ 
+// Adding additional structure via functions
+ context_everywhere a != null && a.length == n*m;
+ context_everywhere n == 10;
+ context (\forall* int x_1, int x_2; 
+      0 <= x_1 && x_1<n && 0 <= x_2 && x_2<m;
+      Perm({:a[idx(x_1,x_2,n)]:}, write));
+void test_alternatives_additional_structure(int[] a, int n, int m){
+ loop_invariant 0 <= j && j <= m;
+ loop_invariant (\forall* int x_1, int x_2; 
+      0 <= x_1 && x_1<n && 0 <= x_2 && x_2<m;
+      Perm({:a[idx(x_1,x_2,n)]:}, write));
+ //~loop_invariant ...
+ loop_invariant (\forall int x_1, int x_2; 
+  0 <= x_1 && x_1<n && 0 <= x_2 && x_2<j && x_1+x_2<10; {:a[idx(x_1,x_2,n)]:} == x_1+x_2);
+for(int j=0; j<m; j++){
+  loop_invariant 0 <= i && i <= n;
+  loop_invariant (\forall* int x_1; 0 <= x_1 && x_1<n; Perm({:a[idx(x_1,j,n)]:}, write));
+  //~loop_invariant ...
+  loop_invariant (\forall int x_1; 
+   0 <= x_1 && x_1<i && x_1+j<10; {:a[idx(x_1,j,n)]:} == x_1+j);
+ for(int i=0; i<n; i++){
+  if(i+j<10){
+   a[idx(i,j,n)] = i+j;
+}}}
+}

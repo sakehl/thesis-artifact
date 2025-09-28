@@ -1,0 +1,28 @@
+pure int hdiv(int a, int b) = b==0 ? 0 : a/b;
+
+pure int nx(); pure int ny();
+pure int inp(int x0, int x1); //~|\label{line:inp-func}|
+pure int inp_min_0();pure int inp_min_1(); //~|\label{line:inp-bounds-1}|
+pure int inp_extent_0();pure int inp_extent_1(); //~|\label{line:inp-bounds-2}|
+pure int blur_y_min_0();pure int blur_y_min_1();
+pure int blur_y_extent_0();pure int blur_y_extent_1();
+
+ ensures \result == hdiv((inp(x, y) + inp(x+1, y) + inp(x+2, y)), 3); //~|\label{line:blurx-func-1}|
+pure int blur_x(int x, int y) =
+ hdiv((inp(x, y) + inp(x+1, y) + inp(x+2, y)), 3); //~|\label{line:blurx-func-2}|
+
+ ensures \result == hdiv((hdiv((inp(x, y) + inp(x+1, y) + inp(x+2, y)), 3) //~|\label{line:blury-func-1}|
+  + hdiv((inp(x, y+1) + inp(x+1, y+1) + inp(x+2, y+1)), 3)
+  + hdiv((inp(x, y+2) + inp(x+1, y+2) + inp(x+2, y+2)), 3)), 3);
+pure int blur_y(int x, int y) =
+ hdiv((blur_x(x, y) + blur_x(x, y+1) + blur_x(x, y+2)), 3); //~|\label{line:blury-func-2}|
+
+ requires inp_min_0() == 0 && inp_extent_0() == nx() + 2 //~|\label{line:blur-pipeline-1}|
+  && inp_min_1() == 0 && inp_extent_1() == ny() + 2 
+  && blur_y_min_0() == 0 && blur_y_extent_0() == nx() 
+  && blur_y_min_1() == 0 && blur_y_extent_1() == ny();
+ ensures (\forall int x,  int y; 0 <= x && x < nx() && 0 <= y && y < ny(); 
+  {:blur_y(x, y):} == hdiv((hdiv((inp(x, y) + inp(x+1, y) + inp(x+2, y)), 3)
+  + hdiv((inp(x, y+1) + inp(x+1, y+1) + inp(x+2, y+1)), 3)
+  + hdiv((inp(x, y+2) + inp(x+1, y+2) + inp(x+2, y+2)), 3)), 3));
+void pipeline(){ } //~|\label{line:blur-pipeline-2}|
