@@ -68,8 +68,8 @@ void create_pipeline(std::string name, int schedule, bool front, bool only_memor
 
   // Do the part that makes it a 'general' matrix multiply.
   result_(i, j) = (a_ * AB(i, j) + b_ * C_(i, j)); 
-  result_.ensures(result_(i, j) >= 0 && 
-    result_(i, j) <= sum_size * 100 * 100 * a_ + b_ * 100); 
+  result_.ensures(result_(i, j) >= 0);
+  result_.ensures(result_(i, j) <= sum_size * 100 * 100 * a_ + b_ * 100);
   
   // Bounding the dimensions
   set_bounds({{0, num_rows}, {0, sum_size}}, A_);
